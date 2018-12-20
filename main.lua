@@ -1,5 +1,13 @@
 manager = require('manager')
 
+function love.load()
+  manager:init()
+end
+
+function love.update()
+  manager.update()
+end
+
 function love.draw()
-  love.graphics.print('Hello world', 400, 300)
+  manager:draw()
 end
