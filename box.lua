@@ -1,3 +1,6 @@
+constants = require('constants')
+squareMeter = constants.meter ^ 2
+
 Box = {
   name ='Box',
   bodyType = 'dynamic',
@@ -14,7 +17,7 @@ function Box:new(manager, x, y, width, height, mass, color)
     )
     newObj.shape = love.physics.newRectangleShape(width, height)
     if mass then
-      density = (width * height) / mass
+      density = (width * height) / (mass * squareMeter)
     end
     newObj.fixture = love.physics.newFixture(
       newObj.body, newObj.shape, density

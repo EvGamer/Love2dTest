@@ -1,7 +1,8 @@
+constants = require('constants')
 manager = {}
 
 function manager:init()
-  local gravity = 64 * 9.8
+  local gravity = constants.meter * 9.8
   self.world = love.physics.newWorld(0, gravity, true);
   self.objects = {}
   self.objectIndex = 1
