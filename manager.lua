@@ -1,18 +1,22 @@
 manager = {}
+
 function manager:init()
-  local gravity = 1
-  self.world = love.physics.newWorld(0, gravity);
+  local gravity = 64 * 9.8
+  self.world = love.physics.newWorld(0, gravity, true);
   self.objects = {}
   self.objectIndex = 1
 end
 
 function manager:update(dt)
+  for i=1, #self.objects do
+    self.objects[i]:update(dt)
+  end
   self.world:update(dt)
 end
 
 function manager:draw()
-  for __, object in pairs(self.objects) do
-    object.draw()
+  for i=1, #self.objects do
+    self.objects[i]:draw()
   end
 end
 

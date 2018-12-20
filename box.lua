@@ -6,16 +6,21 @@ Box = {
 function Box:new(manager, x, y, width, height, mass, color)
   newObj = {
     manager = manager,
-    id = manager.addObject(newObj),
-    body = love.physics.newBody(
-      manager.world, x, y, self.bodyType
-    ),
   }
-  newObj.shape = love.physics.newRectangleShape(width, height)
-  newObj.fixture = love.physics.newFixture(
-    newObj.body, newObj.shape, (width * height) / mass
-  )
-  newObj.body:setFixedRotation(true)
+  if manager then
+    newObj.id = manager:addObject(newObj)
+    newObj.body = love.physics.newBody(
+      manager.world, x, y, self.bodyType
+    )
+    newObj.shape = love.physics.newRectangleShape(width, height)
+    if mass then
+      density = (width * height) / mass
+    end
+    newObj.fixture = love.physics.newFixture(
+      newObj.body, newObj.shape, density
+    )
+    newObj.body:setFixedRotation(true)
+  end
   newObj.color = color
   self.__index = self
   return setmetatable(newObj, self)
@@ -25,10 +30,12 @@ function Box:update(dt)
 end
 
 function Box:draw()
-  love.setColor(
+  love.graphics.setColor(
     self.color[1],
     self.color[2],
     self.color[3]
   )
-  love.graphics.polygon("fill", self.body.getWorldPoints(self.shape.getPoints()))
+  love.graphics.polygon("fill", self.body:getWorldPoints(self.shape:getPoints()))
 end
+
+return Box
