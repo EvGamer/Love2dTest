@@ -33,12 +33,17 @@ function Box:update(dt)
 end
 
 function Box:draw()
-  love.graphics.setColor(
-    self.color[1],
-    self.color[2],
-    self.color[3]
-  )
-  love.graphics.polygon("fill", self.body:getWorldPoints(self.shape:getPoints()))
+  if self.color then
+    love.graphics.setColor(
+        self.color[1],
+        self.color[2],
+        self.color[3]
+    )
+    love.graphics.polygon(
+        "fill",
+        self.body:getWorldPoints(self.shape:getPoints())
+    )
+  end
 end
 
 return Box
