@@ -29,6 +29,10 @@ function Box:new(manager, x, y, width, height, mass, color)
   return setmetatable(newObj, self)
 end
 
+function Box:getPosition()
+  return Body:getPosition()
+end
+
 function Box:update(dt)
 end
 

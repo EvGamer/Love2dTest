@@ -1,5 +1,6 @@
 constants = require('constants')
 Platform = require('platform')
+FollowingCamera = require('followingCamera')
 manager = {}
 meter = constants.meter;
 
@@ -14,8 +15,18 @@ function manager:init()
   self.world = love.physics.newWorld(0, gravity, true);
   self.objects = {}
   self.objectIndex = 1
-  self.width = 10
-  self.height = 64
+  self.width = 20
+  self.height = 20
+  -- Add entities
+  self.player = Player:new(self, 250, 250, 64, 64, colors.red)
+  Platform:new(self, 250, 500, 1000, 64, colors.paleCyan)
+  Platform:new(self,750, 1000, 500,  64, colors.green)
+  local xCam, yCam = 200, 200
+  self.camera = FollowingCamera:new(
+    self, self.player, xCam, yCam,
+    love.graphics.getWidth() - xCam,
+    love.graphics.getHeight() - yCam
+  )
   -- Edges of the world
   self:makeBarrier(0, -1, self.width, 0) --top
   self:makeBarrier(self.width, 0, self.width + 1, self.height) --right
@@ -23,14 +34,25 @@ function manager:init()
   self:makeBarrier(-1, 0, 0, self.height) --left
 end
 
+function manager:getWorldSize()
+  return self.width * meter, self.height * meter;
+end
+
 function manager:update(dt)
   for i=1, #self.objects do
     self.objects[i]:update(dt)
   end
+  self.camera:update()
   self.world:update(dt)
 end
 
 function manager:draw()
+  love.graphics.origin()
+  local matrix = love.math.newTransform(
+    love.graphics.getWidth() / 2 - self.camera.x,
+    love.graphics.getHeight() / 2 - self.camera.y
+  )
+  love.graphics.applyTransform(matrix)
   for i=1, #self.objects do
     self.objects[i]:draw()
   end
