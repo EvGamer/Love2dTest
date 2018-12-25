@@ -13,7 +13,8 @@ end
 
 Player = Box:new()
 Player.forwardForce = 400
-Player.jumpImpulse = 900
+Player.jumpImpulse = 600
+Player.jumpHeight = 2 * meter
 Player.mass = 1
 
 function Player:new(manager, x, y, width, height, color)
@@ -38,9 +39,27 @@ function Player:update(dt)
   self.body:applyForce(self.dir*self.forwardForce, 0)
   if isKeyDown('jump') then
     if vy == 0 then
-      self.body:applyLinearImpulse(0,-self.jumpImpulse)
+      self._yBeforeJump = self.body:getY()
+      print(self._yBeforeJump)
+      self.body:applyLinearImpulse(0, -self.jumpImpulse)
     end
   end
+  if
+    self._yBeforeJump
+    and self._yBeforeJump - self.body:getY() >= self.jumpHeight
+  then
+    self.body:applyForce(0, -vy);
+  end
+end
+
+function Player:draw()
+  lx, ty, rx, by = self.fixture:getBoundingBox()
+  y = self.body:getY()
+  Box.draw(self)
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.print(self._yBeforeJump or 'none', rx + 5, ty + 5)
+  love.graphics.print(y or 'none', rx + 5, ty + 16)
+  love.graphics.print((self._yBeforeJump or 0) - y or 'none', rx + 5, ty + 32)
 end
 
 return Player
