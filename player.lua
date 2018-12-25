@@ -14,7 +14,7 @@ end
 Player = Box:new()
 Player.forwardForce = 400
 Player.jumpImpulse = 600
-Player.jumpHeight = 2 * meter
+Player.jumpHeight = 0
 Player.mass = 1
 
 function Player:new(manager, x, y, width, height, color)
