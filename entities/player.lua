@@ -1,4 +1,4 @@
-Box = require('box')
+Box = require('entities/box')
 keySettings = require('keySettings')
 constants = require('constants')
 meter = constants.meter

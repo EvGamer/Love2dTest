@@ -1,4 +1,4 @@
-Box = require('box')
+Box = require('entities/box')
 
 Platform = Box:new()
 Platform.bodyType = 'static'
