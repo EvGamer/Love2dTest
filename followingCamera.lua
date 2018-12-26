@@ -17,7 +17,7 @@ function shiftCoordToFit(center, objL, objH, camL, camH)
 end
 
 function FollowingCamera:new(manager, followed, minX, minY, maxX, maxY)
-  newObj = {
+  local newObj = {
     manager = manager,
     followed = followed,
     minX = minX,
