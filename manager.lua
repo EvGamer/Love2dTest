@@ -1,5 +1,5 @@
 constants = require('constants')
-Platform = require('platform')
+Platform = require('entities/platform')
 FollowingCamera = require('followingCamera')
 manager = {}
 meter = constants.meter;

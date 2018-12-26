@@ -1,6 +1,6 @@
 manager = require('manager')
-Player = require('player')
-Platform = require('platform')
+Player = require('entities/player')
+Platform = require('entities/platform')
 colors = require('colors')
 constants = require('constants')
 
