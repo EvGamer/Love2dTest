@@ -7,7 +7,7 @@ Box = {
 }
 
 function Box:new(manager, x, y, width, height, mass, color)
-  newObj = {
+  local newObj = {
     manager = manager,
   }
   if manager then
