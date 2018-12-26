@@ -4,6 +4,12 @@ FollowingCamera = require('followingCamera')
 manager = {}
 meter = constants.meter;
 
+function handleContact(a, b)
+  if a and a.handleContact then
+    a:handleContact(b)
+  end
+end
+
 function manager:makeBarrier(x0, y0, x1, y1)
   local w = math.abs(x0 - x1) * meter
   local h =  math.abs(y0 - y1) * meter
@@ -44,10 +50,18 @@ function manager:update(dt)
   end
   self.camera:update()
   self.world:update(dt)
+  for _, contact in pairs(self.world:getContacts()) do
+    local fixtureA, fixtureB = contact:getFixtures()
+    local entityA = fixtureA:getUserData()
+    local entityB = fixtureB:getUserData()
+    handleContact(entityA, entityB)
+    handleContact(entityB, entityA)
+  end
 end
 
 function manager:draw()
   love.graphics.origin()
+
   local matrix = love.math.newTransform(
     love.graphics.getWidth() / 2 - self.camera.x,
     love.graphics.getHeight() / 2 - self.camera.y

@@ -22,6 +22,7 @@ function Box:new(manager, x, y, width, height, mass, color)
     newObj.fixture = love.physics.newFixture(
       newObj.body, newObj.shape, density
     )
+    newObj.fixture:setUserData(newObj)
     newObj.body:setFixedRotation(true)
   end
   newObj.color = color
