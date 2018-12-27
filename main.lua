@@ -4,6 +4,11 @@ Platform = require('entities/platform')
 colors = require('colors')
 constants = require('constants')
 
+love.window.setTitle('Platformer test')
+love.window.setMode(1024, 768, {
+  resizable = true,
+})
+
 function love.load()
   love.physics.setMeter(constants.meter)
   manager:init()

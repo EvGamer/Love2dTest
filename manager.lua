@@ -38,7 +38,6 @@ function manager:init()
   self:makeBarrier(self.width, 0, self.width + 1, self.height) --right
   self:makeBarrier(0, self.height, self.width, self.height + 1) --bottom
   self:makeBarrier(-1, 0, 0, self.height) --left
-  self.dt = 0
 end
 
 function manager:getWorldSize()
@@ -46,7 +45,6 @@ function manager:getWorldSize()
 end
 
 function manager:update(dt)
-  self.dt = dt
   for i=1, #self.objects do
     self.objects[i]:update(dt)
   end
@@ -63,7 +61,6 @@ end
 
 function manager:draw()
   love.graphics.origin()
-  love.graphics.print(tostring(self.dt), 0, 0)
 
   local matrix = love.math.newTransform(
     love.graphics.getWidth() / 2 - self.camera.x,

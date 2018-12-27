@@ -68,8 +68,6 @@ end
 
 function Player:draw()
   local lx, ty, rx, by = self.fixture:getBoundingBox()
-  y = self.body:getY()
-  mass = self.body:getMass()
   love.graphics.setColor(1,1,1,1)
   if self.grounded then
     love.graphics.print('Ouch', rx + 5, ty)
