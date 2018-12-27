@@ -18,7 +18,7 @@ end
 
 Player = Box:new()
 Player.forwardForce = 400
-Player.jumpHeight = 4 * meter
+Player.jumpHeight = 6 * meter
 Player.mass = 1
 Player.jumpImpulse = getJumpImpulse(Player.jumpHeight, Player.mass)
 
@@ -68,11 +68,14 @@ end
 
 function Player:draw()
   local lx, ty, rx, by = self.fixture:getBoundingBox()
+  local x, y = self.body:getPosition()
   love.graphics.setColor(1,1,1,1)
-  if self.grounded then
-    love.graphics.print('Ouch', rx + 5, ty)
-  end
-  love.graphics.print(self.timers.jump:getTime(), rx + 5, ty-16)
+  --if self.grounded then
+  --  love.graphics.print('Ouch', rx + 5, ty)
+  --end
+  love.graphics.print(string.format('x: %.2f', x), rx + 5, ty)
+  love.graphics.print(string.format('y: %.2f', y), rx + 5, ty + 16)
+
   Box.draw(self)
 end
 

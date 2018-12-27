@@ -1,12 +1,21 @@
 constants = require('constants')
 Platform = require('entities/platform')
 FollowingCamera = require('followingCamera')
+map1 = require'assets/maps/map1'
 manager = {}
 meter = constants.meter;
 
 function handleContact(a, b)
   if a and a.handleContact then
     a:handleContact(b)
+  end
+end
+
+function makeCoordinateConverter(width, height)
+  local pixelWidth = width * meter
+  local pixelHeight = height * meter
+  return function(x, y)
+    return x, y
   end
 end
 
@@ -21,12 +30,31 @@ function manager:init()
   self.world = love.physics.newWorld(0, gravity, true);
   self.objects = {}
   self.objectIndex = 1
-  self.width = 20
-  self.height = 20
+  self.width = map1.width
+  self.height = map1.height
+  self.convertXY = makeCoordinateConverter(self.width, self.height)
   -- Add entities
-  self.player = Player:new(self, 250, 250, 64, 64, colors.red)
-  Platform:new(self, 250, 500, 1000, 64, colors.paleCyan)
-  Platform:new(self,750, 1000, 500,  64, colors.green)
+  for _, layer in pairs(map1.layers) do
+    if layer.type == 'objectgroup' then
+      for _, object in pairs(layer.objects) do
+        if object.type == 'player' then
+          local x, y = self.convertXY(object.x, object.y)
+          self.player = Player:new(
+            self, x, y, meter, meter, colors.red
+          )
+        end
+      end
+    elseif layer.type == 'tilelayer' then
+      for i=1, layer.height do
+        for j=1, layer.width do
+          if layer.data[j + (i-1)*layer.width] == 2 then
+            local x, y = self.convertXY((j-1)*meter, (i-1)*meter)
+            Platform:new(self, x+meter/2, y+meter/2, meter, meter, colors.green)
+          end
+        end
+      end
+    end
+  end
   local xCam, yCam = 200, 200
   self.camera = FollowingCamera:new(
     self, self.player, xCam, yCam,
@@ -38,6 +66,7 @@ function manager:init()
   self:makeBarrier(self.width, 0, self.width + 1, self.height) --right
   self:makeBarrier(0, self.height, self.width, self.height + 1) --bottom
   self:makeBarrier(-1, 0, 0, self.height) --left
+
 end
 
 function manager:getWorldSize()
