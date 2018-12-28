@@ -9,12 +9,12 @@ function point(x, y)
   return {x, y}
 end
 
-function createArea(x, y)
+function createArea(x0, y0, x, y)
   return {
-    x0 = x,
-    y0 = y,
-    x = x,
-    y = y,
+    x0 = x0,
+    y0 = y0,
+    x = x or x0,
+    y = y or y0,
   }
 end
 
@@ -65,11 +65,37 @@ function manager:initTiles(layer)
 
   for i=1, layer.height do
     for j=1, layer.width do
-      local topAreaIndex = getAreaIndex(areas, j, i-1)
-      if topAreaIndex then
-        if getTile(layer, x, y) == 2 then
-
+      local iAreaAbove = getAreaIndex(areas, j, i-1)
+      local iAreaBehind
+      if j > 1 then
+        iAreaBehind = getAreaIndex(areas, j-1, i)
+      end
+      local iAreaAboveBehind = getAreaIndex(areas, i-1, j-1)
+      local isProperTile = getTile(layer, j, i) == 2
+      if isProperTile then
+        --table.insert(areas, createArea(j, i))
+        if iAreaAbove then
+          if iAreaBehind == nil then
+            table.insert(areas, createArea(
+              areas[iAreaAbove].x0, areas[iAreaAbove].y0,
+              j-1, areas[iAreaAbove].y
+            ))
+            areas[iAreaAbove].x0 = j
+            areas[iAreaAbove].y = i
+          else
+            areas[iAreaAbove].y = i
+          end
+        elseif iAreaBehind and iAreaBehind ~= iAreaAboveBehind then
+          areas[iAreaBehind].x = j
+        else
+          table.insert(areas, createArea(j, i))
         end
+      elseif iAreaAbove and iAreaAbove == iAreaBehind then
+        table.insert(areas, createArea(
+          j, areas[iAreaAbove].y0,
+          areas[iAreaAbove].x, i - 1
+        ))
+        areas[iAreaAbove].x = j - 1
       end
     end
   end
@@ -79,8 +105,8 @@ function manager:initTiles(layer)
     local height = (areas[i].y - areas[i].y0 + 1) * meter
     local x = (areas[i].x0 - 1) * meter + width * 0.5
     local y = (areas[i].y0 - 1) * meter + height * 0.5
-    print(areas[i].x0, areas[i].y0, areas[i].x, areas[i].y)
-    print(x,y, width, height)
+    --print(areas[i].x0, areas[i].y0, areas[i].x, areas[i].y)
+    --print(x,y, width, height)
     if(width > 0 and height > 0) then
       Platform:new(self, x, y, width, height, colors.green)
     end
