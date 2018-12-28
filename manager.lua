@@ -5,17 +5,22 @@ map1 = require'assets/maps/map1'
 manager = {}
 meter = constants.meter;
 
+function point(x, y)
+  return {x, y}
+end
+
+function createArea(x, y)
+  return {
+    x0 = x,
+    y0 = y,
+    x = x,
+    y = y,
+  }
+end
+
 function handleContact(a, b)
   if a and a.handleContact then
     a:handleContact(b)
-  end
-end
-
-function makeCoordinateConverter(width, height)
-  local pixelWidth = width * meter
-  local pixelHeight = height * meter
-  return function(x, y)
-    return x, y
   end
 end
 
@@ -25,6 +30,63 @@ function manager:makeBarrier(x0, y0, x1, y1)
   Platform:new(self, x0 * meter + w/2, y0 * meter + h/2, w, h);
 end
 
+function manager:initMapEntities(layer)
+  for _, object in pairs(layer.objects) do
+    if object.type == 'player' then
+      self.player = Player:new(
+        self, object.x, object.y, meter, meter, colors.red
+      )
+    end
+  end
+end
+
+function getAreaIndex(areas, x, y)
+  for i=1, #areas do
+    if
+      areas[i].x0 <= x and x <= areas[i].x
+      and areas[i].y0 <= y and y <= areas[i].y
+    then
+      return i
+    end
+  end
+  return nil
+end
+
+function getTile(layer, x, y)
+  return layer.data[x + (y-1)*layer.width]
+end
+
+function existEqual(a, b)
+  return a~=nil and a==b
+end
+
+function manager:initTiles(layer)
+  local areas = {}
+
+  for i=1, layer.height do
+    for j=1, layer.width do
+      local topAreaIndex = getAreaIndex(areas, j, i-1)
+      if topAreaIndex then
+        if getTile(layer, x, y) == 2 then
+
+        end
+      end
+    end
+  end
+
+  for i=1, #areas do
+    local width = (areas[i].x - areas[i].x0 + 1) * meter
+    local height = (areas[i].y - areas[i].y0 + 1) * meter
+    local x = (areas[i].x0 - 1) * meter + width * 0.5
+    local y = (areas[i].y0 - 1) * meter + height * 0.5
+    print(areas[i].x0, areas[i].y0, areas[i].x, areas[i].y)
+    print(x,y, width, height)
+    if(width > 0 and height > 0) then
+      Platform:new(self, x, y, width, height, colors.green)
+    end
+  end
+end
+
 function manager:init()
   local gravity = constants.gravity
   self.world = love.physics.newWorld(0, gravity, true);
@@ -32,27 +94,12 @@ function manager:init()
   self.objectIndex = 1
   self.width = map1.width
   self.height = map1.height
-  self.convertXY = makeCoordinateConverter(self.width, self.height)
   -- Add entities
   for _, layer in pairs(map1.layers) do
     if layer.type == 'objectgroup' then
-      for _, object in pairs(layer.objects) do
-        if object.type == 'player' then
-          local x, y = self.convertXY(object.x, object.y)
-          self.player = Player:new(
-            self, x, y, meter, meter, colors.red
-          )
-        end
-      end
+      self:initMapEntities(layer)
     elseif layer.type == 'tilelayer' then
-      for i=1, layer.height do
-        for j=1, layer.width do
-          if layer.data[j + (i-1)*layer.width] == 2 then
-            local x, y = self.convertXY((j-1)*meter, (i-1)*meter)
-            Platform:new(self, x+meter/2, y+meter/2, meter, meter, colors.green)
-          end
-        end
-      end
+      self:initTiles(layer)
     end
   end
   local xCam, yCam = 200, 200
