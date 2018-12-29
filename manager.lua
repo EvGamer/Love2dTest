@@ -56,59 +56,45 @@ function getTile(layer, x, y)
   return layer.data[x + (y-1)*layer.width]
 end
 
-function existEqual(a, b)
-  return a~=nil and a==b
+function addArea(areas, x, y, x0, y0)
+  table.insert(areas, createArea(x, y, x0, y0))
 end
 
 function manager:initTiles(layer)
   local areas = {}
 
-  for i=1, layer.height do
-    for j=1, layer.width do
-      local iAreaAbove = getAreaIndex(areas, j, i-1)
-      local iAreaBehind
-      if j > 1 then
-        iAreaBehind = getAreaIndex(areas, j-1, i)
-      end
-      local iAreaAboveBehind = getAreaIndex(areas, i-1, j-1)
-      local isProperTile = getTile(layer, j, i) == 2
-      if isProperTile then
-        --table.insert(areas, createArea(j, i))
-        if iAreaAbove then
-          if iAreaBehind == nil then
-            table.insert(areas, createArea(
-              areas[iAreaAbove].x0, areas[iAreaAbove].y0,
-              j-1, areas[iAreaAbove].y
-            ))
-            areas[iAreaAbove].x0 = j
-            areas[iAreaAbove].y = i
+  for y=1, layer.height do
+    for x=1, layer.width do
+      local cur = getAreaIndex(areas, x, y)
+      local top = getAreaIndex(areas, x, y-1)
+      local left = getAreaIndex(areas, x-1, y)
+      local topLeft = getAreaIndex(areas, x-1, y-1)
+      if getTile(layer, x, y) == 2 then
+        if top then
+          if left == top then
+            areas[top].y = y
           else
-            areas[iAreaAbove].y = i
+            addArea(areas, x, areas[top].y0, areas[top].x, y)
+            areas[top].x = x-1
           end
-        elseif iAreaBehind and iAreaBehind ~= iAreaAboveBehind then
-          areas[iAreaBehind].x = j
+        elseif left and topLeft ~= left then
+          areas[left].x = x
         else
-          table.insert(areas, createArea(j, i))
+          addArea(areas, x, y)
         end
-      elseif iAreaAbove and iAreaAbove == iAreaBehind then
-        table.insert(areas, createArea(
-          j, areas[iAreaAbove].y0,
-          areas[iAreaAbove].x, i - 1
-        ))
-        areas[iAreaAbove].x = j - 1
+      elseif cur and cur == top then
+        addArea(areas, x, areas[top].y0, areas[top].x, y - 1)
+        areas[top].x = x-1
       end
     end
   end
-
   for i=1, #areas do
-    local width = (areas[i].x - areas[i].x0 + 1) * meter
-    local height = (areas[i].y - areas[i].y0 + 1) * meter
+    local width = (areas[i].x - areas[i].x0 + 1) * meter - 1
+    local height = (areas[i].y - areas[i].y0 + 1) * meter - 1
     local x = (areas[i].x0 - 1) * meter + width * 0.5
     local y = (areas[i].y0 - 1) * meter + height * 0.5
-    --print(areas[i].x0, areas[i].y0, areas[i].x, areas[i].y)
-    --print(x,y, width, height)
     if(width > 0 and height > 0) then
-      Platform:new(self, x, y, width, height, colors.green)
+      Platform:new(self, x, y, width, height, {1, 1, 1})
     end
   end
 end
