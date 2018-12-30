@@ -27,7 +27,7 @@ function FollowingCamera:new(manager, followed, minX, minY, maxX, maxY)
   }
   self.__index = self
   setmetatable(newObj, self)
-  x, y = newObj.followed.body:getPosition()
+  local x, y = newObj.followed.body:getPosition()
   newObj:follow(x, y)
   return newObj
 end

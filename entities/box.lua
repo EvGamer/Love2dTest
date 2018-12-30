@@ -1,5 +1,6 @@
-constants = require('constants')
-squareMeter = constants.meter ^ 2
+local constants = require('constants')
+local squareMeter = constants.meter ^ 2
+local unpack = require('utils/unpack')
 
 Box = {
   name ='Box',
@@ -17,7 +18,7 @@ function Box:new(manager, x, y, width, height, mass, color)
     )
     newObj.shape = love.physics.newRectangleShape(width, height)
     if mass then
-      density = (width * height) / (mass * squareMeter)
+      density = (mass * squareMeter) / (width * height)
     end
     newObj.fixture = love.physics.newFixture(
       newObj.body, newObj.shape, density
@@ -35,6 +36,17 @@ function Box:getPosition()
 end
 
 function Box:update(dt)
+end
+
+function Box:drawLines(lines)
+  local lx, ty, rx, by = self.fixture:getBoundingBox()
+  love.graphics.setColor(1,1,1,1)
+  for i = 1, #lines do
+    love.graphics.print(
+      string.format(lines[i][1], unpack(lines[i], 2)),
+      rx + 5, by - 16 * (#lines - (i - 1))
+    )
+  end
 end
 
 function Box:draw()

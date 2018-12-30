@@ -1,9 +1,11 @@
-constants = require('constants')
-Platform = require('entities/platform')
-FollowingCamera = require('followingCamera')
-map1 = require'assets/maps/map1'
-manager = {}
-meter = constants.meter;
+local constants = require('constants')
+local FollowingCamera = require('followingCamera')
+local Player = require('entities/player')
+local Platform = require('entities/platform')
+local colors = require('colors')
+local map1 = require'assets/maps/map1'
+local manager = {}
+local meter = constants.meter;
 
 function point(x, y)
   return {x, y}
@@ -18,9 +20,9 @@ function createArea(x0, y0, x, y)
   }
 end
 
-function handleContact(a, b)
+function handleContact(contact, a, b)
   if a and a.handleContact then
-    a:handleContact(b)
+    a:handleContact(contact, b)
   end
 end
 
@@ -34,7 +36,7 @@ function manager:initMapEntities(layer)
   for _, object in pairs(layer.objects) do
     if object.type == 'player' then
       self.player = Player:new(
-        self, object.x, object.y, meter, meter, colors.red
+        self, object.x, object.y, meter-16, meter-16, colors.red
       )
     end
   end
@@ -62,7 +64,6 @@ end
 
 function manager:initTiles(layer)
   local areas = {}
-
   for y=1, layer.height do
     for x=1, layer.width do
       local cur = getAreaIndex(areas, x, y)
@@ -89,12 +90,18 @@ function manager:initTiles(layer)
     end
   end
   for i=1, #areas do
-    local width = (areas[i].x - areas[i].x0 + 1) * meter - 1
-    local height = (areas[i].y - areas[i].y0 + 1) * meter - 1
+    local width = (areas[i].x - areas[i].x0 + 1) * meter
+    local height = (areas[i].y - areas[i].y0 + 1) * meter
     local x = (areas[i].x0 - 1) * meter + width * 0.5
     local y = (areas[i].y0 - 1) * meter + height * 0.5
     if(width > 0 and height > 0) then
-      Platform:new(self, x, y, width, height, {1, 1, 1})
+      Platform:new(self,
+        math.floor(x),
+        math.floor(y),
+        math.floor(width),
+        math.floor(height),
+        {1, 1, 1}
+      )
     end
   end
 end
@@ -106,6 +113,7 @@ function manager:init()
   self.objectIndex = 1
   self.width = map1.width
   self.height = map1.height
+  self.dt = 0
   -- Add entities
   for _, layer in pairs(map1.layers) do
     if layer.type == 'objectgroup' then
@@ -133,6 +141,7 @@ function manager:getWorldSize()
 end
 
 function manager:update(dt)
+  self.dt = dt
   for i=1, #self.objects do
     self.objects[i]:update(dt)
   end
@@ -142,8 +151,8 @@ function manager:update(dt)
     local fixtureA, fixtureB = contact:getFixtures()
     local entityA = fixtureA:getUserData()
     local entityB = fixtureB:getUserData()
-    handleContact(entityA, entityB)
-    handleContact(entityB, entityA)
+    handleContact(contact, entityA, entityB)
+    handleContact(contact, entityB, entityA)
   end
 end
 
