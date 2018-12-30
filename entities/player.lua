@@ -2,6 +2,7 @@ Box = require('entities/box')
 keySettings = require('keySettings')
 constants = require('constants')
 Timer = require('utils/timer')
+unpack = require('utils/unpack')
 meter = constants.meter
 gravity = constants.gravity
 
@@ -18,7 +19,7 @@ end
 
 Player = Box:new()
 Player.forwardForce = 400
-Player.jumpHeight = 6 * meter
+Player.jumpHeight = 4.15 * meter
 Player.mass = 1
 Player.jumpImpulse = getJumpImpulse(Player.jumpHeight, Player.mass)
 
@@ -67,15 +68,12 @@ function Player:update(dt)
 end
 
 function Player:draw()
-  local lx, ty, rx, by = self.fixture:getBoundingBox()
-  local x, y = self.body:getPosition()
-  love.graphics.setColor(1,1,1,1)
-  --if self.grounded then
-  --  love.graphics.print('Ouch', rx + 5, ty)
-  --end
-  love.graphics.print(string.format('x: %.2f', x), rx + 5, ty)
-  love.graphics.print(string.format('y: %.2f', y), rx + 5, ty + 16)
 
+  self:drawLines{
+    { 'x: %.2f', x },
+    { 'y: %.2f', y },
+    { 'mass: %.2f', self.body:getMass() },
+  }
   Box.draw(self)
 end
 

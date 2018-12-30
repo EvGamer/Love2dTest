@@ -34,7 +34,7 @@ function manager:initMapEntities(layer)
   for _, object in pairs(layer.objects) do
     if object.type == 'player' then
       self.player = Player:new(
-        self, object.x, object.y, meter, meter, colors.red
+        self, object.x, object.y, meter-16, meter-16, colors.red
       )
     end
   end
