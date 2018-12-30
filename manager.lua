@@ -62,6 +62,55 @@ function addArea(areas, x, y, x0, y0)
   table.insert(areas, createArea(x, y, x0, y0))
 end
 
+function manager:initTilesHorizontaly(layer)
+  local i = 0
+  local areas = {}
+  for x=1, layer.width do
+    for y=1, layer.height do
+      local cur = getAreaIndex(areas, x, y)
+      local top = getAreaIndex(areas, x, y-1)
+      local left = getAreaIndex(areas, x-1, y)
+      local topLeft = getAreaIndex(areas, x-1, y-1)
+      if x == 1 then
+        i = i + 1
+      end
+      if getTile(layer, x, y) == 2 then
+        if left then
+          if left == top then
+            areas[left].x = x
+          else
+            addArea(areas, areas[left].x0, y, x, areas[left].y)
+            areas[left].y = y-1
+          end
+        elseif top and topLeft ~= top then
+          areas[top].y = y
+        else
+          addArea(areas, x, y)
+        end
+      elseif cur and cur == left then
+        addArea(areas, areas[left].x, y, x-1, areas[left].y)
+        areas[left].y = y-1
+      end
+    end
+  end
+  print(i)
+  for i=1, #areas do
+    local width = (areas[i].x - areas[i].x0 + 1) * meter
+    local height = (areas[i].y - areas[i].y0 + 1) * meter
+    local x = (areas[i].x0 - 1) * meter + width * 0.5
+    local y = (areas[i].y0 - 1) * meter + height * 0.5
+    if(width > 0 and height > 0) then
+      Platform:new(self,
+        math.floor(x),
+        math.floor(y),
+        math.floor(width),
+        math.floor(height),
+        {1, 1, 1}
+      )
+    end
+  end
+end
+
 function manager:initTiles(layer)
   local areas = {}
   for y=1, layer.height do
@@ -119,7 +168,7 @@ function manager:init()
     if layer.type == 'objectgroup' then
       self:initMapEntities(layer)
     elseif layer.type == 'tilelayer' then
-      self:initTiles(layer)
+      self:initTilesHorizontaly(layer)
     end
   end
   local xCam, yCam = 200, 200
