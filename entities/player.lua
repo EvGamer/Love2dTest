@@ -1,10 +1,9 @@
-Box = require('entities/box')
-keySettings = require('keySettings')
-constants = require('constants')
-Timer = require('utils/timer')
-unpack = require('utils/unpack')
-meter = constants.meter
-gravity = constants.gravity
+local Box = require('entities/box')
+local keySettings = require('keySettings')
+local constants = require('constants')
+local Timer = require('utils/timer')
+local meter = constants.meter
+local gravity = constants.gravity
 
 function isKeyDown(keyPurpose)
   return (
@@ -18,9 +17,11 @@ function getJumpImpulse(height, mass)
 end
 
 Player = Box:new()
-Player.forwardForce = 400
+Player.acceleration = 20
 Player.jumpHeight = 4.15 * meter
-Player.mass = 1
+Player.mass = 10
+Player.forwardForce = Player.mass * Player.acceleration * 60
+Player.maxVelocity = 500
 Player.jumpImpulse = getJumpImpulse(Player.jumpHeight, Player.mass)
 
 function Player:new(manager, x, y, width, height, color)
@@ -34,18 +35,27 @@ function Player:new(manager, x, y, width, height, color)
   return setmetatable(newObj, self)
 end
 
-function Player:handleContact()
+function Player:handleContact(contact)
+  local cx1, cy1, cx2, cy2 = contact:getPositions()
+  self.contactX1, self.contactY1, self.contactX2, self.contactY2 = cx1, cy1, cx2, cy2
+  local lx, ty, rx, by = self.fixture:getBoundingBox()
   local vx, vy = self.body:getLinearVelocity()
-  if self.timers.jump:runOut() and vy == 0 then
+  self.by = by
+  if
+    self.timers.jump:runOut()
+      and cy1 and cy2 and cx1 and cx2
+      and by - cy1 <= 0.5 and by - cy1 <= 0.5
+  then
     self.grounded = true
   end
 end
 
 function Player:update(dt)
   local vx, vy = self.body:getLinearVelocity()
-  if isKeyDown('moveLeft') then
+  local x, y = self.body:getPosition()
+  if isKeyDown('moveLeft') and -vx <= self.maxVelocity then
     self.dir = -1
-  elseif isKeyDown('moveRight') then
+  elseif isKeyDown('moveRight') and vx <= self.maxVelocity then
     self.dir = 1
   else
     self.dir = 0
@@ -63,17 +73,29 @@ function Player:update(dt)
     self.timers.jump:reset()
     self.body:applyLinearImpulse(0, -self.jumpImpulse)
   end
-
+  self.grounded = false
   self.timers.jump:update(dt)
 end
 
 function Player:draw()
-
+  local x, y = self.body:getPosition()
   self:drawLines{
     { 'x: %.2f', x },
     { 'y: %.2f', y },
     { 'mass: %.2f', self.body:getMass() },
+    { 'dt: %.2g', self.manager.dt},
+    { 'vx: %.2f, vy: %.2f', self.body:getLinearVelocity() },
+    { '%s', self.grounded and 'grounded' or '' }
   }
+  if
+    self.contactX1 and self.contactY1
+    and self.contactX2 and self.contactY2
+  then
+    love.graphics.line(
+      self.contactX1, self.contactY1,
+      self.contactX2, self.contactY2
+    )
+  end
   Box.draw(self)
 end
 
