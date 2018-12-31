@@ -1,5 +1,6 @@
 local constants = require('constants')
-local FollowingCamera = require('followingCamera')
+local FollowingCamera = require('cameras/followingCamera')
+local ControlledCamera = require('cameras/controlledCamera')
 local Player = require('entities/player')
 local Platform = require('entities/platform')
 local colors = require('colors')
@@ -62,9 +63,16 @@ function addArea(areas, x, y, x0, y0)
   table.insert(areas, createArea(x, y, x0, y0))
 end
 
-function manager:initTilesHorizontaly(layer)
+function manager:getHorizontalRectangles(layer)
   local i = 0
   local areas = {}
+  local maprix = {}
+  for y=1, layer.height do
+    maprix[y] = {}
+    for x=1, layer.width do
+      maprix[y][x] = getTile(layer, x, y)
+    end
+  end
   for x=1, layer.width do
     for y=1, layer.height do
       local cur = getAreaIndex(areas, x, y)
@@ -73,8 +81,9 @@ function manager:initTilesHorizontaly(layer)
       local topLeft = getAreaIndex(areas, x-1, y-1)
       if x == 1 then
         i = i + 1
+        print(cur, top, left, topLeft)
       end
-      if getTile(layer, x, y) == 2 then
+      if maprix[y][x] == 2 then
         if left then
           if left == top then
             areas[left].x = x
@@ -93,25 +102,10 @@ function manager:initTilesHorizontaly(layer)
       end
     end
   end
-  print(i)
-  for i=1, #areas do
-    local width = (areas[i].x - areas[i].x0 + 1) * meter
-    local height = (areas[i].y - areas[i].y0 + 1) * meter
-    local x = (areas[i].x0 - 1) * meter + width * 0.5
-    local y = (areas[i].y0 - 1) * meter + height * 0.5
-    if(width > 0 and height > 0) then
-      Platform:new(self,
-        math.floor(x),
-        math.floor(y),
-        math.floor(width),
-        math.floor(height),
-        {1, 1, 1}
-      )
-    end
-  end
+  return areas
 end
 
-function manager:initTiles(layer)
+function manager:getVerticalRectangles(layer)
   local areas = {}
   for y=1, layer.height do
     for x=1, layer.width do
@@ -138,19 +132,24 @@ function manager:initTiles(layer)
       end
     end
   end
+  return areas
+end
+
+function manager:makePlatformsFromRectangles(areas)
   for i=1, #areas do
     local width = (areas[i].x - areas[i].x0 + 1) * meter
     local height = (areas[i].y - areas[i].y0 + 1) * meter
     local x = (areas[i].x0 - 1) * meter + width * 0.5
     local y = (areas[i].y0 - 1) * meter + height * 0.5
     if(width > 0 and height > 0) then
-      Platform:new(self,
+      local p = Platform:new(self,
         math.floor(x),
         math.floor(y),
         math.floor(width),
         math.floor(height),
         {1, 1, 1}
       )
+      p.area = i
     end
   end
 end
@@ -168,7 +167,9 @@ function manager:init()
     if layer.type == 'objectgroup' then
       self:initMapEntities(layer)
     elseif layer.type == 'tilelayer' then
-      self:initTilesHorizontaly(layer)
+      self:makePlatformsFromRectangles(
+        self:getHorizontalRectangles(layer)
+      )
     end
   end
   local xCam, yCam = 200, 200

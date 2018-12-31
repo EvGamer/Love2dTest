@@ -11,7 +11,11 @@ function Platform:new(manager, x, y, width, height, color)
 end
 
 function Platform:draw()
+  local x, y = self.body:getPosition()
   if self.color then
+    if self.area then
+      love.graphics.print(self.area, x, y)
+    end
     love.graphics.setColor(
       self.color[1],
       self.color[2],
