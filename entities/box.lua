@@ -13,6 +13,7 @@ function Box:new(manager, x, y, width, height, mass, color)
   }
   if manager then
     newObj.id = manager:addObject(newObj)
+    newObj.mass = mass;
     newObj.body = love.physics.newBody(
       manager.world, x, y, self.bodyType
     )
