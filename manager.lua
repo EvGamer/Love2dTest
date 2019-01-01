@@ -1,15 +1,13 @@
 local constants = require('constants')
-local FollowingCamera = require('followingCamera')
+local FollowingCamera = require('cameras/followingCamera')
+local ControlledCamera = require('cameras/controlledCamera')
 local Player = require('entities/player')
 local Platform = require('entities/platform')
 local colors = require('colors')
 local map1 = require'assets/maps/map1'
+local isKeyDown = require'utils/isKeyDown'
 local manager = {}
 local meter = constants.meter;
-
-function point(x, y)
-  return {x, y}
-end
 
 function createArea(x0, y0, x, y)
   return {
@@ -62,7 +60,50 @@ function addArea(areas, x, y, x0, y0)
   table.insert(areas, createArea(x, y, x0, y0))
 end
 
-function manager:initTiles(layer)
+function manager:getHorizontalRectangles(layer)
+  local areas = {}
+  local maprix = {}
+  for y=1, layer.height do
+    maprix[y] = {}
+    for x=1, layer.width do
+      maprix[y][x] = getTile(layer, x, y)
+    end
+  end
+  for x=1, layer.width do
+    for y=1, layer.height do
+      local cur = getAreaIndex(areas, x, y)
+      local top = getAreaIndex(areas, x, y-1)
+      local left = getAreaIndex(areas, x-1, y)
+      local topLeft = getAreaIndex(areas, x-1, y-1)
+      if maprix[y][x] == 2 then
+        if left then
+          if left == top then
+            areas[left].x = x
+          else
+            if areas[left].y > areas[left].y0 then
+              addArea(areas, areas[left].x0, areas[left].y0, areas[left].x, y-1)
+            end
+            areas[left].y0 = y
+            areas[left].x = x
+          end
+        elseif top and topLeft ~= top then
+          areas[top].y = y
+        else
+          addArea(areas, x, y)
+        end
+      elseif cur and cur == left then
+        if areas[cur].y > areas[cur].y0 then
+          addArea(areas, areas[cur].x0, areas[cur].y0, areas[cur].x, y-1)
+        end
+        areas[cur].y0 = y
+        areas[cur].x = x-1
+      end
+    end
+  end
+  return areas
+end
+
+function manager:getVerticalRectangles(layer)
   local areas = {}
   for y=1, layer.height do
     for x=1, layer.width do
@@ -89,19 +130,24 @@ function manager:initTiles(layer)
       end
     end
   end
+  return areas
+end
+
+function manager:makePlatformsFromRectangles(areas)
   for i=1, #areas do
     local width = (areas[i].x - areas[i].x0 + 1) * meter
     local height = (areas[i].y - areas[i].y0 + 1) * meter
     local x = (areas[i].x0 - 1) * meter + width * 0.5
     local y = (areas[i].y0 - 1) * meter + height * 0.5
-    if(width > 0 and height > 0) then
-      Platform:new(self,
+    if width > 0 and height > 0 then
+      local p = Platform:new(self,
         math.floor(x),
         math.floor(y),
         math.floor(width),
         math.floor(height),
         {1, 1, 1}
       )
+      p.area = i
     end
   end
 end
@@ -119,15 +165,21 @@ function manager:init()
     if layer.type == 'objectgroup' then
       self:initMapEntities(layer)
     elseif layer.type == 'tilelayer' then
-      self:initTiles(layer)
+      self:makePlatformsFromRectangles(
+        self:getHorizontalRectangles(layer)
+      )
     end
   end
   local xCam, yCam = 200, 200
-  self.camera = FollowingCamera:new(
+  self.followingCamera = FollowingCamera:new(
     self, self.player, xCam, yCam,
     love.graphics.getWidth() - xCam,
     love.graphics.getHeight() - yCam
   )
+  self.freeCamera = ControlledCamera:new(
+    self, self.followingCamera.x, self.followingCamera.y, 10
+  )
+  self.cameraType = 'followingCamera'
   -- Edges of the world
   self:makeBarrier(0, -1, self.width, 0) --top
   self:makeBarrier(self.width, 0, self.width + 1, self.height) --right
@@ -140,12 +192,20 @@ function manager:getWorldSize()
   return self.width * meter, self.height * meter;
 end
 
+local cameraSwitch = {
+  freeCamera ='followingCamera',
+  followingCamera = 'freeCamera'
+}
+
 function manager:update(dt)
   self.dt = dt
+  if isKeyDown('freeCamera') then
+    self.cameraType = cameraSwitch[self.cameraType]
+  end
   for i=1, #self.objects do
     self.objects[i]:update(dt)
   end
-  self.camera:update(dt)
+  self[self.cameraType]:update(dt)
   self.world:update(dt)
   for _, contact in pairs(self.world:getContacts()) do
     local fixtureA, fixtureB = contact:getFixtures()
@@ -160,8 +220,8 @@ function manager:draw()
   love.graphics.origin()
 
   local matrix = love.math.newTransform(
-    love.graphics.getWidth() / 2 - self.camera.x,
-    love.graphics.getHeight() / 2 - self.camera.y
+    love.graphics.getWidth() / 2 - self[self.cameraType].x,
+    love.graphics.getHeight() / 2 - self[self.cameraType].y
   )
   love.graphics.applyTransform(matrix)
   for i=1, #self.objects do
