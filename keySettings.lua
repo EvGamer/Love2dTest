@@ -5,5 +5,6 @@ return {
   cameraMoveUp = {'kp8'},
   cameraMoveDown = {'kp2'},
   cameraMoveLeft = {'kp4'},
-  cameraMoveRight = {'kp6'}
+  cameraMoveRight = {'kp6'},
+  freeCamera = {'c'}
 }

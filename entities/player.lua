@@ -1,16 +1,11 @@
 local Box = require('entities/box')
-local keySettings = require('keySettings')
 local constants = require('constants')
 local Timer = require('utils/timer')
+local isKeyDown = require('utils/isKeyDown')
 local meter = constants.meter
 local gravity = constants.gravity
 
-function isKeyDown(keyPurpose)
-  return (
-    love.keyboard.isDown(keySettings[keyPurpose][1])
-    or love.keyboard.isDown(keySettings[keyPurpose][2])
-  )
-end
+
 
 function getJumpImpulse(height, mass)
   return mass * (math.sqrt(2 * gravity * height))
