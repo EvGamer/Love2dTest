@@ -31,6 +31,17 @@ function WheelChassis:createWheel(x, y)
   }
 end
 
+function WheelChassis:isGrounded(contact)
+  local cx1, cy1, cx2, cy2 = contact:getPositions()
+  local lx = self.lWheel.body:getX()
+  local rx = self.rWheel.body:getY()
+  return lx == cx1 or rx == cx1
+end
+
+function WheelChassis:KgetMass()
+  return self.lWheel.body:getMass() + self.rWheel.body:getMass()
+end
+
 function WheelChassis:update(dt)
 
 end

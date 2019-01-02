@@ -6,19 +6,12 @@ local WheelChassis = require'entities/chassis/wheelChassis'
 local meter = constants.meter
 local gravity = constants.gravity
 
-
-
-function getJumpImpulse(height, mass)
-  return mass * (math.sqrt(2 * gravity * height))
-end
-
 Player = Box:new()
 Player.acceleration = 20
 Player.jumpHeight = 4.15 * meter
 Player.mass = 10
 Player.forwardForce = Player.mass * Player.acceleration * 60
 Player.maxVelocity = 500
-Player.jumpImpulse = getJumpImpulse(Player.jumpHeight, Player.mass)
 Player.cornerRadius = 5
 Player.chassis = WheelChassis
 
@@ -30,8 +23,19 @@ function Player:new(manager, x, y, width, height, color, chassis)
     jump = Timer.new(0, 1);
   }
   newObj.chassis = chassis and chassis:new(newObj) or self.chassis:new(newObj)
+
   self.__index = self
-  return setmetatable(newObj, self)
+  setmetatable(newObj, self)
+  newObj:updateJumpImpulse()
+  return newObj
+end
+
+function Player:updateJumpImpulse()
+  local chassisMass = 0
+  if(self.chassis and self.chassis.getMass) then
+    chassisMass = self.chassis:getMass()
+  end
+  self.jumpImpulse = (self.mass + chassisMass) * (math.sqrt(2 * gravity * self.jumpHeight))
 end
 
 function Player:handleContact(contact)
@@ -42,10 +46,7 @@ function Player:handleContact(contact)
   self.by = by
   if
     self.timers.jump:runOut()
-    and (
-      (cy1 and cx1 and by - cy1 < 9)
-      or (cy2 and cx2 and by - cy2 < 9)
-    )
+    and self.chassis:isGrounded(contact)
   then
     self.grounded = true
   end
@@ -73,20 +74,23 @@ function Player:update(dt)
   then
     self.grounded = false
     self.timers.jump:reset()
+    self.jumpY = self.body:getY()
     self.body:applyLinearImpulse(0, -self.jumpImpulse)
   end
   self.grounded = false
   self.timers.jump:update(dt)
 end
 
-function Player:draw()  local x, y = self.body:getPosition()
+function Player:draw()
+  local x, y = self.body:getPosition()
   self:drawLines{
     { 'x: %.2f', x },
     { 'y: %.2f', y },
     { 'mass: %.2f', self.body:getMass() },
     { 'dt: %.2g', self.manager.dt},
     { 'vx: %.2f, vy: %.2f', self.body:getLinearVelocity() },
-    { '%s', self.grounded and 'grounded' or '' }
+    { '%s', self.grounded and 'grounded' or '' },
+    { 'jump height %.2f', self.jumpY and (self.jumpY - y)/meter or 0}
   }
   if
     self.contactX1 and self.contactY1
