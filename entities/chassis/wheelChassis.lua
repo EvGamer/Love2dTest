@@ -38,7 +38,7 @@ function WheelChassis:isGrounded(contact)
   return lx == cx1 or rx == cx1
 end
 
-function WheelChassis:KgetMass()
+function WheelChassis:getMass()
   return self.lWheel.body:getMass() + self.rWheel.body:getMass()
 end
 
