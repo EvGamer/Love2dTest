@@ -1,15 +1,10 @@
-local Box = require('entities/box')
-local constants = require('constants')
-local Timer = require('utils/timer')
-local isKeyDown = require('utils/isKeyDown')
+local Box = require'entities/box'
+local constants = require'constants'
+local Timer = require'utils/timer'
+local isKeyDown = require'utils/isKeyDown'
+local WheelChassis = require'entities/chassis/wheelChassis'
 local meter = constants.meter
 local gravity = constants.gravity
-
-
-
-function getJumpImpulse(height, mass)
-  return mass * (math.sqrt(2 * gravity * height))
-end
 
 Player = Box:new()
 Player.acceleration = 20
@@ -17,17 +12,30 @@ Player.jumpHeight = 4.15 * meter
 Player.mass = 10
 Player.forwardForce = Player.mass * Player.acceleration * 60
 Player.maxVelocity = 500
-Player.jumpImpulse = getJumpImpulse(Player.jumpHeight, Player.mass)
+Player.cornerRadius = 5
+Player.chassis = WheelChassis
 
-function Player:new(manager, x, y, width, height, color)
-  local newObj = Box:new(manager, x, y, width, height, self.mass, color)
+function Player:new(manager, x, y, width, height, color, chassis)
+  local newObj = Box:new(manager, x, y, width - self.cornerRadius, height, self.mass, color)
   newObj.dir = 0;
   newObj.grounded = false;
   newObj.timers = {
     jump = Timer.new(0, 1);
   }
+  newObj.chassis = chassis and chassis:new(newObj) or self.chassis:new(newObj)
+
   self.__index = self
-  return setmetatable(newObj, self)
+  setmetatable(newObj, self)
+  newObj:updateJumpImpulse()
+  return newObj
+end
+
+function Player:updateJumpImpulse()
+  local chassisMass = 0
+  if(self.chassis and self.chassis.getMass) then
+    chassisMass = self.chassis:getMass()
+  end
+  self.jumpImpulse = (self.mass + chassisMass) * (math.sqrt(2 * gravity * self.jumpHeight))
 end
 
 function Player:handleContact(contact)
@@ -38,14 +46,14 @@ function Player:handleContact(contact)
   self.by = by
   if
     self.timers.jump:runOut()
-      and cy1 and cy2 and cx1 and cx2
-      and by - cy1 <= 0.5 and by - cy1 <= 0.5
+    and self.chassis:isGrounded(contact)
   then
     self.grounded = true
   end
 end
 
 function Player:update(dt)
+  self.chassis:update(dt)
   local vx, vy = self.body:getLinearVelocity()
   local x, y = self.body:getPosition()
   if isKeyDown('moveLeft') and -vx <= self.maxVelocity then
@@ -66,6 +74,7 @@ function Player:update(dt)
   then
     self.grounded = false
     self.timers.jump:reset()
+    self.jumpY = self.body:getY()
     self.body:applyLinearImpulse(0, -self.jumpImpulse)
   end
   self.grounded = false
@@ -80,7 +89,8 @@ function Player:draw()
     { 'mass: %.2f', self.body:getMass() },
     { 'dt: %.2g', self.manager.dt},
     { 'vx: %.2f, vy: %.2f', self.body:getLinearVelocity() },
-    { '%s', self.grounded and 'grounded' or '' }
+    { '%s', self.grounded and 'grounded' or '' },
+    { 'jump height %.2f', self.jumpY and (self.jumpY - y)/meter or 0}
   }
   if
     self.contactX1 and self.contactY1
@@ -92,6 +102,7 @@ function Player:draw()
     )
   end
   Box.draw(self)
+  self.chassis:draw()
 end
 
 return Player

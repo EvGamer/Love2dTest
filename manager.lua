@@ -166,7 +166,7 @@ function manager:init()
       self:initMapEntities(layer)
     elseif layer.type == 'tilelayer' then
       self:makePlatformsFromRectangles(
-        self:getHorizontalRectangles(layer)
+        self:getVerticalRectangles(layer)
       )
     end
   end
