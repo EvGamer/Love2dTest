@@ -20,7 +20,8 @@ function Player:new(manager, x, y, width, height, color, chassis)
   newObj.dir = 0;
   newObj.grounded = false;
   newObj.timers = {
-    jump = Timer.new(0, 1);
+    jump = Timer:new(0.1);
+    coyote = Timer:new(100)
   }
   newObj.chassis = chassis and chassis:new(newObj) or self.chassis:new(newObj)
 
@@ -49,6 +50,13 @@ function Player:handleContact(contact)
     and self.chassis:isGrounded(contact)
   then
     self.grounded = true
+    self.timers.coyote:reset()
+  end
+end
+
+function Player:updateTimers(dt)
+  for _, timer in pairs(self.timers) do
+    timer:update(dt)
   end
 end
 
@@ -71,14 +79,17 @@ function Player:update(dt)
   if
     isKeyDown('jump')
     and self.grounded
+    and self.timers.jump:runOut()
   then
     self.grounded = false
     self.timers.jump:reset()
     self.jumpY = self.body:getY()
     self.body:applyLinearImpulse(0, -self.jumpImpulse)
   end
-  self.grounded = false
-  self.timers.jump:update(dt)
+  if self.timers.coyote:runOut() then
+    self.grounded = false
+  end
+  self:updateTimers(dt)
 end
 
 function Player:draw()

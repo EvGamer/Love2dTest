@@ -1,9 +1,9 @@
 Timer = {}
 mtTimer = { __index=Timer }
 
-function Timer:new(initial, left)
+function Timer:new(initial)
   local newObj = {
-    left = left or 0,
+    left = initial,
     initial = initial,
   }
   setmetatable(newObj, mtTimer)

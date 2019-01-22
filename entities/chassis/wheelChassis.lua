@@ -34,7 +34,7 @@ end
 function WheelChassis:isGrounded(contact)
   local cx1, cy1, cx2, cy2 = contact:getPositions()
   local lx = self.lWheel.body:getX()
-  local rx = self.rWheel.body:getY()
+  local rx = self.rWheel.body:getX()
   return lx == cx1 or rx == cx1
 end
 
