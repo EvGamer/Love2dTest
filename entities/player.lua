@@ -21,7 +21,7 @@ function Player:new(manager, x, y, width, height, color, chassis)
   newObj.grounded = false;
   newObj.timers = {
     jump = Timer:new(0.1);
-    coyote = Timer:new(100)
+    coyote = Timer:new(0.1)
   }
   newObj.chassis = chassis and chassis:new(newObj) or self.chassis:new(newObj)
 
@@ -84,6 +84,7 @@ function Player:update(dt)
     self.grounded = false
     self.timers.jump:reset()
     self.jumpY = self.body:getY()
+    self.body:setLinearVelocity(vx, 0)
     self.body:applyLinearImpulse(0, -self.jumpImpulse)
   end
   if self.timers.coyote:runOut() then
@@ -101,7 +102,8 @@ function Player:draw()
     { 'dt: %.2g', self.manager.dt},
     { 'vx: %.2f, vy: %.2f', self.body:getLinearVelocity() },
     { '%s', self.grounded and 'grounded' or '' },
-    { 'jump height %.2f', self.jumpY and (self.jumpY - y)/meter or 0}
+    { 'jump timer %.2f', self.timers.jump:getTime()},
+    { 'ground timer %.2f', self.timers.coyote:getTime()}
   }
   if
     self.contactX1 and self.contactY1
