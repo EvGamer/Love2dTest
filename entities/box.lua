@@ -7,6 +7,10 @@ Box = {
   bodyType = 'dynamic',
 }
 
+function Box.createShape(width, height)
+  return love.physics.newRectangleShape(width, height)
+end
+
 function Box:new(manager, x, y, width, height, mass, color)
   local newObj = {
     manager = manager,
@@ -16,7 +20,7 @@ function Box:new(manager, x, y, width, height, mass, color)
     newObj.body = love.physics.newBody(
       manager.world, x, y, self.bodyType
     )
-    newObj.shape = love.physics.newRectangleShape(width, height)
+    newObj.shape = self.createShape(width, height)
     if mass then
       density = (mass * squareMeter) / (width * height)
     end
